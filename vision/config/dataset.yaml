@@ -1,0 +1,5 @@
+path: ../data  # dataset lives in vision/data/ (git-ignored); see README
+train: train/images
+val: val/images
+nc: 3  # number of classes
+names: ['Troy', 'Gateway', 'Phish']

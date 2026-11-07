@@ -1,0 +1,21 @@
+# systemd unit for the phone feed page.
+#   sudo cp feederweb.service /etc/systemd/system/
+#   sudo systemctl enable --now feederweb
+# Replace <user> with the login on the feeder Pi and set STREAM_URL to the
+# vision Pi's MJPEG endpoint (a Tailscale address, not committed here).
+[Unit]
+Description=Fish feeder web page (Flask)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=<user>
+WorkingDirectory=/home/<user>/smart-fish-tank/feeder
+Environment=STREAM_URL=
+Environment=PORT=8080
+ExecStart=/usr/bin/python3 app.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

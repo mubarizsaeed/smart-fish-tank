@@ -1,0 +1,22 @@
+# Optional scheduled feeds (roadmap item). Two units: a oneshot service that runs
+# feed_once.py and a timer that fires it twice a day. Copy both to
+# /etc/systemd/system/, fill in <user>, then `sudo systemctl enable --now feed.timer`.
+#
+# --- feed.service ---
+# [Unit]
+# Description=One automatic fish feed
+# [Service]
+# Type=oneshot
+# User=<user>
+# WorkingDirectory=/home/<user>/smart-fish-tank/feeder
+# ExecStart=/usr/bin/python3 feed_once.py
+#
+# --- feed.timer ---
+# [Unit]
+# Description=Feed the fish at 09:00 and 17:00
+# [Timer]
+# OnCalendar=*-*-* 09:00:00
+# OnCalendar=*-*-* 17:00:00
+# Persistent=true
+# [Install]
+# WantedBy=timers.target

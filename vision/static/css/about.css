@@ -1,0 +1,80 @@
+/* ==========================================================================
+   About Page Layout
+   ========================================================================== */
+   .about-container {
+    max-width: 1200px;
+    margin: 6rem auto 2rem;
+    padding: 2rem;
+}
+
+.page-title {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+/* ==========================================================================
+   Fish Grid and Cards
+   ========================================================================== */
+.fish-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.fish-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+}
+
+.fish-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ==========================================================================
+   Fish Card Content
+   ========================================================================== */
+.fish-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.fish-name {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.fish-role {
+    font-style: italic;
+    margin-bottom: 1rem;
+    color: #666;
+}
+
+.fish-desc {
+    color: #444;
+    line-height: 1.6;
+}
+
+/* ==========================================================================
+   Fish Colors
+   ========================================================================== */
+.gateway { color: #FFD700; }
+.phish { color: #87CEEB; }
+.trojan { color: #FFA500; }
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 768px) {
+    .fish-grid {
+        grid-template-columns: 1fr;
+    }
+}

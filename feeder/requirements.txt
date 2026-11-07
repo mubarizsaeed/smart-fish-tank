@@ -1,0 +1,4 @@
+# Feeder runs on a Raspberry Pi 5 (Raspberry Pi OS Bookworm, 64-bit).
+# Pure gpiozero, no other packages. On Pi 5 gpiozero uses the lgpio backend.
+gpiozero
+lgpio

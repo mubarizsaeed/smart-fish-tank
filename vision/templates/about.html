@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>About | CYPHER Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="https://web.uri.edu/cypher/">
+            <img src="{{ url_for('static', filename='images/Cypher.jpg') }}" alt="Cypher Logo" class="logo">
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="https://web.uri.edu/cypher/people/" target="_blank">Contact</a>
+        </div>
+    </nav>
+
+    <div class="about-container">
+        <h1 class="page-title">Tank Residents</h1>
+        <div class="fish-grid">
+            <div class="fish-card gateway">  
+                <div class="fish-icon">🐡</div>
+                <h2 class="fish-name">Gateway</h2>
+                <p class="fish-desc">
+                    Gateway patrols the front of the tank. Who is a male cherry barb.
+                </p>
+            </div>
+
+            <div class="fish-card phish">
+                <div class="fish-icon">🐟</div>
+                <h2 class="fish-name">Phish II</h2>
+                <p class="fish-desc">
+                    A light orange swimmer, carrying on the family tradition 
+                    as the second generation tank resident. Who is a female cherry barb.
+                </p>
+            </div>
+
+            <div class="fish-card trojan">  
+                <div class="fish-icon">🐠</div>
+                <h2 class="fish-name">Troy</h2>
+                <p class="fish-desc">
+                    Our orange friend who loves investigating every 
+                    corner of the tank. Who is a female cherry barb.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

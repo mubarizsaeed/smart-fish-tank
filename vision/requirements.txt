@@ -1,0 +1,10 @@
+# Vision Pi (Raspberry Pi 5, Raspberry Pi OS 64-bit) and the training machine.
+flask
+waitress
+opencv-python
+numpy
+# YOLOv8 detection overlay (vision/main.py, vision/train.py)
+ultralytics
+# optional: GPT-4o-mini tank description endpoint (/analyze-tank) and fish_description.py
+openai
+markdown2

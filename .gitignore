@@ -1,0 +1,33 @@
+# --- never commit secrets or the internal handoff doc ---
+FishTank_Project_Handoff*.md
+*handoff*.md
+.env
+secrets*
+
+# runtime state and logs
+feed.log
+.feeder_state.json
+*.log
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+yolo_train/
+env/
+
+# model weights and datasets
+*.pt
+*.onnx
+datasets/
+runs/
+
+# os cruft
+.DS_Store
+Thumbs.db
+
+# editor / dataset folders
+.vscode/
+data/
+vision/data/

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Fish Tank 3D</title>
+<meta name="description" content="Interactive 3D layout of the smart fish tank: the built feeder and Pi saddle, and the planned ESP32 water-quality node and ESP32 camera pan head.">
+<style>
+  :root { --ink:#15202b; --muted:#5b6b7a; --panel:rgba(255,255,255,.88); --line:#d6dde3;
+          --built:#2d6a4f; --planned:#0e7c86; }
+  html, body { margin:0; height:100%; background:#eef3f6; color:var(--ink);
+               font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow:hidden; }
+  #app { position:fixed; inset:0; }
+  #labels { position:fixed; inset:0; pointer-events:none; }
+  .label { font-size:12px; line-height:1.2; padding:4px 8px; border-radius:8px; white-space:nowrap;
+           background:var(--panel); border:1.5px solid var(--built); color:var(--ink);
+           box-shadow:0 1px 4px rgba(0,0,0,.12); transform:translate(-50%,-140%); }
+  .label.planned { border-color:var(--planned); border-style:dashed; color:#0b5c64; }
+  .label.small { font-size:11px; padding:2px 6px; }
+  .label b { display:block; font-size:12.5px; }
+  #panel { position:fixed; left:16px; top:16px; max-width:300px; background:var(--panel);
+           border:1px solid var(--line); border-radius:14px; padding:12px 14px; backdrop-filter:blur(6px); }
+  #panel h1 { font-size:15px; margin:0 0 4px; }
+  #panel p { font-size:12px; color:var(--muted); margin:0 0 8px; }
+  .leg { display:flex; align-items:center; gap:8px; font-size:12px; margin:3px 0; }
+  .sw { width:14px; height:14px; border-radius:4px; display:inline-block; flex:none; }
+  .sw.built { background:#f4f4f2; border:2px solid var(--built); }
+  .sw.planned { background:#c9eef0; border:2px dashed var(--planned); }
+  #ctl { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px; }
+  #ctl label { display:flex; align-items:center; gap:4px; cursor:pointer; }
+  #hint { position:fixed; right:16px; bottom:12px; font-size:11px; color:var(--muted); }
+  @media (max-width:600px) { #panel { max-width:calc(100vw - 32px); } .label{font-size:10px;} }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="labels"></div>
+<div id="panel">
+  <h1>Smart Fish Tank &middot; system layout</h1>
+  <p>LANDEN 60P (600 &times; 300 &times; 360 mm). Drag to orbit, scroll to zoom.</p>
+  <div class="leg"><span class="sw built"></span> built and running: feeder, Pi 5 saddle, driver</div>
+  <div class="leg"><span class="sw planned"></span> planned: ESP32 water node, ESP32 pan head, camera mount v5</div>
+  <div id="ctl">
+    <label><input type="checkbox" id="cbLabels" checked> labels</label>
+    <label><input type="checkbox" id="cbWater" checked> water</label>
+    <label><input type="checkbox" id="cbSpin" checked> auto-rotate</label>
+    <label><input type="checkbox" id="cbXray"> x-ray glass</label>
+  </div>
+</div>
+<div id="hint">three.js &middot; all dimensions in mm</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const params = new URLSearchParams(location.search);
+const STATIC = params.has('static');
+
+// ---------- renderer / scene ----------
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+app.appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+labelRenderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#eef3f6');
+scene.fog = new THREE.Fog('#eef3f6', 2200, 4200);
+
+const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 10, 8000);
+if (STATIC) camera.position.set(640, 600, -1260); else camera.position.set(-780, 520, 1120);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, STATIC ? 215 : 190, STATIC ? -60 : 0);
+controls.enableDamping = true;
+controls.autoRotate = !STATIC;
+controls.autoRotateSpeed = 0.6;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 300; controls.maxDistance = 3000;
+controls.update();
+
+scene.add(new THREE.HemisphereLight('#ffffff', '#b8c4cc', 0.9));
+const sun = new THREE.DirectionalLight('#fff6e8', 1.6);
+sun.position.set(-500, 900, 700);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const sc = sun.shadow.camera; sc.left = -900; sc.right = 900; sc.top = 900; sc.bottom = -900; sc.near = 100; sc.far = 3000;
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+const fill = new THREE.DirectionalLight('#dfeaf5', 0.5); fill.position.set(700, 400, -600); scene.add(fill);
+
+// ---------- materials ----------
+const M = {
+  desk:    new THREE.MeshStandardMaterial({ color: '#d9d4c8', roughness: 0.9 }),
+  petg:    new THREE.MeshStandardMaterial({ color: '#f3f3f0', roughness: 0.55 }),
+  petgDark:new THREE.MeshStandardMaterial({ color: '#2b2f33', roughness: 0.6 }),
+  glass:   new THREE.MeshPhysicalMaterial({ color: '#cfe9ef', transparent: true, opacity: 0.18, roughness: 0.05,
+                                            metalness: 0, side: THREE.DoubleSide, depthWrite: false }),
+  water:   new THREE.MeshPhysicalMaterial({ color: '#3f9fc6', transparent: true, opacity: 0.38, roughness: 0.2, depthWrite: false }),
+  sand:    new THREE.MeshStandardMaterial({ color: '#9a8a6c', roughness: 1 }),
+  plant:   new THREE.MeshStandardMaterial({ color: '#3f8f4f', roughness: 0.8 }),
+  fish:    new THREE.MeshStandardMaterial({ color: '#e2552a', roughness: 0.5 }),
+  motor:   new THREE.MeshStandardMaterial({ color: '#3a3f44', roughness: 0.4, metalness: 0.3 }),
+  blue:    new THREE.MeshStandardMaterial({ color: '#2f6fd6', roughness: 0.5 }),
+  pcb:     new THREE.MeshStandardMaterial({ color: '#1f7a4d', roughness: 0.6 }),
+  pcbDark: new THREE.MeshStandardMaterial({ color: '#15242e', roughness: 0.55 }),
+  pcbBlue: new THREE.MeshStandardMaterial({ color: '#2a56a8', roughness: 0.55 }),
+  chip:    new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.4 }),
+  steel:   new THREE.MeshStandardMaterial({ color: '#c9ced3', roughness: 0.25, metalness: 0.9 }),
+  cable:   new THREE.MeshStandardMaterial({ color: '#222222', roughness: 0.7 }),
+  cableW:  new THREE.MeshStandardMaterial({ color: '#eeeeee', roughness: 0.7 }),
+  planned: new THREE.MeshPhysicalMaterial({ color: '#8fd9dd', transparent: true, opacity: 0.55, roughness: 0.4 }),
+  probe:   new THREE.MeshPhysicalMaterial({ color: '#e8f4f6', transparent: true, opacity: 0.75, roughness: 0.1 }),
+  tan:     new THREE.MeshStandardMaterial({ color: '#d8b27a', roughness: 0.7 }),
+  tanT:    new THREE.MeshPhysicalMaterial({ color: '#d8b27a', transparent: true, opacity: 0.45, roughness: 0.7 }),
+  led:     new THREE.MeshStandardMaterial({ color: '#ff3b30', emissive: '#ff3b30', emissiveIntensity: 0.8 }),
+};
+
+// ---------- helpers ----------
+function box(w, h, d, mat, x, y, z, parent = scene, shadow = true) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = shadow; parent.add(m); return m;
+}
+function cyl(r, len, mat, x, y, z, axis = 'y', parent = scene, rTop) {
+  const g = new THREE.CylinderGeometry(rTop ?? r, r, len, 32);
+  const m = new THREE.Mesh(g, mat);
+  if (axis === 'x') m.rotation.z = Math.PI / 2;
+  if (axis === 'z') m.rotation.x = Math.PI / 2;
+  m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function tube(points, r, mat, parent = scene) {
+  const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)));
+  const m = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, r, 10, false), mat);
+  m.castShadow = true; parent.add(m); return m;
+}
+const labels = [];
+function label(text, x, y, z, cls = '') {
+  const div = document.createElement('div');
+  div.className = 'label ' + cls; div.innerHTML = text;
+  const o = new CSS2DObject(div); o.position.set(x, y, z); scene.add(o); labels.push(o); return o;
+}
+function edges(mesh, color = '#6f9fae') {
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), new THREE.LineBasicMaterial({ color }));
+  e.position.copy(mesh.position); e.rotation.copy(mesh.rotation); scene.add(e); return e;
+}
+
+// ---------- desk + tank ----------
+const desk = box(1700, 24, 1000, M.desk, 0, -12, 60); desk.receiveShadow = true;
+const TW = 600, TH = 360, TD = 300, G = 6;          // LANDEN 60P
+const WATER_H = 305;
+const tankGlass = box(TW, TH, TD, M.glass, 0, TH / 2, 0, scene, false);
+edges(tankGlass, '#7fb3c0');
+const water = box(TW - 2 * G, WATER_H - 20, TD - 2 * G, M.water, 0, 20 + (WATER_H - 20) / 2, 0, scene, false);
+box(TW - 2 * G, 22, TD - 2 * G, M.sand, 0, 11 + G, 0);
+// plants + fish
+for (const [x, z, h] of [[-230, -80, 150], [-180, 60, 110], [210, -70, 170], [250, 40, 90], [40, -110, 120]]) {
+  for (let i = 0; i < 3; i++) cyl(2.5, h - i * 25, M.plant, x + i * 8 - 8, (h - i * 25) / 2 + 17, z + (i - 1) * 6, 'y', scene, 0.5);
+}
+const fishes = [];
+for (let i = 0; i < 8; i++) {
+  const f = new THREE.Mesh(new THREE.SphereGeometry(14, 16, 12), M.fish);
+  f.scale.set(1.4, 0.55, 0.4); f.castShadow = true;
+  f.userData = { a: Math.random() * Math.PI * 2, r: 120 + Math.random() * 130, y: 70 + Math.random() * 180, s: 0.2 + Math.random() * 0.3 };
+  scene.add(f); fishes.push(f);
+}
+label('<b>LANDEN 60P rimless</b>8 cherry barbs &middot; Seachem Tidal 35', -40, 40, 170, 'small');
+
+// ---------- rear cover plate (built) ----------
+const PZ = -TD / 2;                       // back glass plane
+box(420, 4, 68, M.petg, 0, TH + 2, PZ + 34 - 3);         // plate: lips sit on the back glass, spans forward over the water
+box(420, 6, 10, M.petg, 0, TH - 3, PZ - 8);             // lip behind the glass
+label('<b>Rear cover plate</b>420 &times; 68 &times; 4 mm PETG', -185, TH + 8, PZ + 30, 'small');
+
+// ---------- auto feeder (built) ----------
+const FX = -70, FZ = PZ + 34;
+box(46, 48, 40, M.petg, FX, TH + 4 + 24, FZ);                 // housing
+cyl(15.6, 48, M.petg, FX, TH + 4 + 26, FZ, 'x');              // drum bore visual
+box(46, 66, 40, M.petg, FX, TH + 4 + 48 + 33, FZ);            // hopper tower
+const hopperTop = new THREE.Mesh(new THREE.CylinderGeometry(26, 18, 10, 4), M.petg);
+hopperTop.rotation.y = Math.PI / 4; hopperTop.position.set(FX, TH + 4 + 48 + 66 + 5, FZ); scene.add(hopperTop);
+cyl(14, 19, M.motor, FX - 23 - 9.5, TH + 4 + 26, FZ, 'x');    // 28BYJ-48 body
+box(14, 17, 26, M.blue, FX - 23 - 9.5, TH + 4 + 26 + 16, FZ); // wire box
+cyl(5, 30, M.petg, FX, TH + 4 - 12, FZ, 'y');                 // chute / drop
+for (let i = 0; i < 7; i++) cyl(1.6, 3, M.sand, FX + (Math.random() - .5) * 8, TH - 30 - i * 14, FZ + (Math.random() - .5) * 8);
+label('<b>Auto feeder</b>28BYJ-48 + ULN2003 &middot; 3D-printed drum &middot; 0.09 g dose', FX, TH + 150, FZ);
+
+// ---------- Pi 5 saddle (built) ----------
+const SX = 50;
+box(100, 4, 60, M.petgDark, SX, TH + 8, PZ + 30 - 3);          // bridge on top of plate
+box(100, 120, 24, M.petgDark, SX, TH - 60, PZ - 6 - 12);       // leg hanging behind the glass
+box(85, 56, 2, M.pcb, SX, TH - 60, PZ - 6 - 24 - 1);           // Pi 5 (vertical, faces back)
+box(30, 30, 8, M.chip, SX + 10, TH - 60, PZ - 6 - 24 - 6);     // fan/heatsink
+box(44, 6, 3, M.chip, SX, TH - 60 + 25, PZ - 6 - 24 - 3);      // 40-pin header
+box(30, 2, 34, M.pcb, SX + 20, TH + 11, PZ + 14);              // ULN2003 on the back half of the bridge
+for (let i = 0; i < 4; i++) box(2, 2, 2, M.led, SX + 32, TH + 13, PZ + 2 + i * 8);
+box(16, 8, 10, M.chip, SX + 12, TH + 16, PZ + 14);             // darlington chip
+for (let i = 0; i < 6; i++) {
+  const c = ['#e0392b', '#f5b400', '#2f6fd6', '#2faa5d', '#d35fd3', '#eeeeee'][i];
+  tube([[SX + 24 + i * 2, TH + 12, PZ + 8], [SX + 26 + i * 2, TH + 30, PZ - 10], [SX + 20 + i * 2, TH - 10, PZ - 34], [SX - 20 + i * 7, TH - 32, PZ - 36]],
+       1.1, new THREE.MeshStandardMaterial({ color: c, roughness: .7 }));
+}
+tube([[FX - 32, TH + 40, FZ], [FX - 36, TH + 70, FZ - 25], [SX - 20, TH + 40, PZ - 2], [SX + 20, TH + 16, PZ + 10]], 2, M.blue);
+label('<b>Pi 5 in printed saddle</b>ULN2003 on the bridge &middot; Tailscale &middot; feed page', SX, TH - 130, PZ - 40);
+
+// ---------- ESP32 water-quality node (planned) ----------
+const EX = 215;
+const esp = new THREE.Group(); scene.add(esp);
+box(60, 4, 40, M.planned, EX, TH + 8, PZ + 20 - 3, esp);       // probe saddle bridge
+box(60, 90, 22, M.planned, EX, TH - 45, PZ - 6 - 11, esp);     // dry enclosure behind the glass
+box(55, 28, 1.6, M.pcbDark, EX, TH - 40, PZ - 6 - 22 - 1, esp);   // ESP32 DevKitC
+box(18, 16, 3, M.steel, EX + 12, TH - 36, PZ - 6 - 22 - 3, esp);  // RF can
+box(9, 3, 7, M.steel, EX - 23, TH - 48, PZ - 6 - 22 - 3, esp);    // USB-C
+box(40, 25, 1.6, M.pcbBlue, EX, TH - 75, PZ - 6 - 22 - 1, esp);   // pH conditioning board
+cyl(5, 6, M.steel, EX + 12, TH - 75, PZ - 6 - 22 - 5, 'z', esp);  // BNC
+box(2, 2, 2, M.led, EX + 20, TH - 30, PZ - 6 - 22 - 2.5, esp);
+tube([[EX - 28, TH - 48, PZ - 30], [EX - 60, TH - 60, PZ - 60], [EX - 90, TH - 120, PZ - 120]], 2, M.cableW, esp);   // USB-C power lead
+const RIM = TH + 14;
+// DS18B20
+tube([[EX - 15, TH - 50, PZ - 20], [EX - 18, RIM + 10, PZ - 8], [EX - 20, RIM + 12, PZ + 25], [EX - 22, WATER_H - 60, PZ + 40], [EX - 24, 170, PZ + 50]], 1.6, M.cable, esp);
+cyl(3, 50, M.steel, EX - 24, 150, PZ + 50, 'y', esp);
+label('<b>DS18B20</b>temperature', EX - 24, 120, PZ + 50, 'planned small');
+// pH electrode
+tube([[EX + 12, TH - 80, PZ - 30], [EX + 20, RIM + 14, PZ - 10], [EX + 26, RIM + 14, PZ + 40], [EX + 28, 290, PZ + 70]], 1.6, M.cable, esp);
+cyl(6, 120, M.probe, EX + 28, 230, PZ + 70, 'y', esp);
+cyl(6.5, 14, M.petgDark, EX + 28, 296, PZ + 70, 'y', esp);
+label('<b>pH electrode</b>BNC + analog board', EX + 28, 165, PZ + 70, 'planned small');
+// float switch at the waterline
+box(16, 4, 30, M.planned, EX + 2, TH + 10, PZ + 26, esp);
+cyl(2.5, 60, M.petgDark, EX + 2, WATER_H + 5, PZ + 40, 'y', esp);
+const fl = new THREE.Mesh(new THREE.TorusGeometry(7, 3.5, 12, 24), M.petg);
+fl.rotation.x = Math.PI / 2; fl.position.set(EX + 2, WATER_H + 2, PZ + 40); fl.castShadow = true; esp.add(fl);
+tube([[EX + 2, TH + 14, PZ + 40], [EX + 4, TH + 30, PZ + 10], [EX + 8, TH - 20, PZ - 20]], 1.2, M.cable, esp);
+label('<b>Level float</b>at the waterline', EX + 2, WATER_H + 40, PZ + 40, 'planned small');
+label('<b>ESP32 water-quality node</b>dry behind the glass &middot; breadboard &rarr; protoboard &rarr; KiCad PCB', EX, TH + 70, PZ - 30, 'planned');
+
+// Wi-Fi / MQTT link ESP32 -> Pi
+{
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(EX - 30, TH - 30, PZ - 40),
+    new THREE.Vector3((EX + SX) / 2, TH + 160, PZ - 120),
+    new THREE.Vector3(SX + 50, TH - 20, PZ - 45));
+  const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(60));
+  const line = new THREE.Line(geo, new THREE.LineDashedMaterial({ color: '#0e7c86', dashSize: 12, gapSize: 8 }));
+  line.computeLineDistances(); scene.add(line);
+  label('Wi-Fi &middot; MQTT', (EX + SX) / 2, TH + 115, PZ - 90, 'planned small');
+}
+
+// ---------- camera mount v5 + ESP32 pan head (planned) ----------
+const CX = -600, CZ = 400;
+const cam = new THREE.Group(); scene.add(cam);
+box(90, 26, 70, M.tan, CX, 13, CZ, cam);                      // desk clamp base
+box(90, 40, 10, M.tan, CX, 20, CZ + 40, cam);                   // clamp jaw over the desk edge
+cyl(34, 44, M.tanT, CX, 48, CZ, 'y', cam);                      // enclosed pod (cutaway tint)
+cyl(13, 18, M.motor, CX, 46, CZ, 'x', cam);                     // second 28BYJ-48 inside the pod
+box(30, 1.6, 20, M.pcbDark, CX, 36, CZ - 18, cam);              // ESP32 inside the pod
+box(10, 8, 2, M.steel, CX + 6, 40, CZ - 18, cam);
+cyl(11, 260, M.tan, CX, 70 + 130, CZ, 'y', cam);                // post
+cyl(8, 120, M.tan, CX, 330 + 60, CZ, 'y', cam);                 // telescoping section
+cyl(14, 10, M.petgDark, CX, 335, CZ, 'y', cam);                 // height lock knob
+cyl(24, 12, M.tan, CX, 396, CZ, 'y', cam);                      // pan drum
+const camHead = new THREE.Group(); camHead.position.set(CX, 420, CZ); cam.add(camHead);
+box(40, 34, 30, M.motor, 0, 0, 0, camHead);                     // Arducam body in dock
+cyl(9, 12, M.chip, 0, 0, 20, 'z', camHead);                     // lens
+camHead.lookAt(new THREE.Vector3(0, 200, 0));
+tube([[CX + 20, 420, CZ], [CX + 60, 380, CZ + 20], [CX + 40, 60, CZ + 60], [CX - 60, 10, CZ + 120]], 2, M.cable, cam);
+label('<b>Arducam 12 MP on mount v5</b>desk clamp &middot; telescoping post &middot; slide-in dock', CX, 480, CZ, 'planned');
+label('<b>ESP32 pan head</b>2nd 28BYJ-48 in the pod &middot; ~350&deg; sweep &middot; USB-C from the Pi', CX, 150, CZ + 10, 'planned small');
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+$('cbLabels').onchange = e => labels.forEach(l => l.visible = e.target.checked);
+$('cbWater').onchange = e => water.visible = e.target.checked;
+$('cbSpin').onchange = e => controls.autoRotate = e.target.checked;
+$('cbXray').onchange = e => { M.glass.opacity = e.target.checked ? 0.06 : 0.18; };
+if (STATIC) { $('cbSpin').checked = false; }
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight);
+});
+
+const clock = new THREE.Clock();
+function tick() {
+  const t = clock.getElapsedTime();
+  for (const f of fishes) {
+    const u = f.userData, a = u.a + t * u.s;
+    f.position.set(Math.cos(a) * u.r, u.y + Math.sin(t * 1.3 + u.r) * 6, Math.sin(a) * u.r * 0.4);
+    f.rotation.y = -a + Math.PI / 2;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+tick();
+window.__ready = true;
+</script>
+</body>
+</html>

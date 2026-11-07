@@ -1,0 +1,222 @@
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+   :root {
+    --primary-color: #1a237e;
+    --primary-hover: #283593;
+    --background-color: #f0f2f5;
+    --white: #ffffff;
+    --text-color: #333333;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 8px rgba(0,0,0,0.1);
+    --border-radius: 8px;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* ==========================================================================
+   Navigation
+   ========================================================================== */
+.navbar {
+    background-color: var(--primary-color);
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    width: 100%;
+    box-sizing: border-box;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    height: 50px;
+    transition: transform 0.2s ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+}
+
+.nav-links {
+    margin-left: auto;
+    display: flex;
+    gap: 2rem;
+    padding-right: 2rem;
+}
+
+.nav-links a {
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+}
+
+.nav-links a:hover {
+    color: #e3f2fd;
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+.container {
+    max-width: 1400px;
+    margin: 6rem auto 2rem;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+/* ==========================================================================
+   Stream Section
+   ========================================================================== */
+.stream-box {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+}
+
+.stream-title {
+    color: var(--primary-color);
+    margin: 0 0 1.5rem 0;
+    font-size: 1.8rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.stream-window {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.stream-window img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ==========================================================================
+   Analysis Section
+   ========================================================================== */
+.info-box {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    height: fit-content;
+    position: sticky;
+    top: 6rem;
+}
+
+.info-box h2 {
+    color: var(--primary-color);
+    margin: 0 0 1.5rem 0;
+    font-weight: 600;
+    text-align: center;
+}
+
+.analysis-button {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.analysis-button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.analysis-button:active {
+    transform: translateY(0);
+}
+
+#analysis-result {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    min-height: 100px;
+    margin-top: 1rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Loading Animation
+   ========================================================================== */
+.loading {
+    display: none;
+    text-align: center;
+    padding: 1rem;
+    color: #666;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading p {
+    animation: pulse 1.5s infinite;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 1200px) {
+    .container {
+        max-width: 95%;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1rem;
+    }
+
+    .nav-links {
+        gap: 1rem;
+        padding-right: 1rem;
+    }
+
+    .container {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+
+    .stream-window {
+        height: 50vh;
+    }
+
+    .info-box {
+        position: static;
+    }
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fish Stream | CYPHER Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="https://web.uri.edu/cypher/">
+            <img src="{{ url_for('static', filename='images/Cypher.jpg') }}" alt="Cypher Logo" class="logo">
+        </a>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="https://web.uri.edu/cypher/people/" target="_blank">Contact</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="stream-box">
+            <h1 class="stream-title">Fish Tank Live Stream</h1>
+            <div class="stream-window">
+                <img src="{{ url_for('video_feed') }}" alt="Stream">
+            </div>
+        </div>
+        <div class="info-box">
+            <h2>Live Analysis</h2>
+            <button id="analyze-tank" class="analysis-button">
+                Analyze Fish Tank
+            </button>
+            <div class="loading" id="loading-indicator">
+                <p>Analyzing tank contents...</p>
+            </div>
+            <div id="analysis-result">
+                Click the button above to get a detailed analysis of the fish tank.
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
