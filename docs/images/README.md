@@ -26,7 +26,6 @@ reflecting.
 
 | Filename | What it is |
 |---|---|
-| `../photos/feed-page.png` | Screenshot of the Flask feed page on a phone |
 | `../photos/wiring-bench.jpg` | ULN2003 to Pi header on the bench, before mounting |
 | `../photos/printed-parts.jpg` | All PETG parts laid out |
 | `../photos/stream-yolo.png` | The vision stream with YOLOv8 boxes on the fish |
